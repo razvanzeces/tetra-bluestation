@@ -46,7 +46,7 @@ impl Default for SoapySdrIoCfg {
 }
 
 /// Configuration for Ettus USRP B2xx series
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct CfgUsrpB2xx {
     pub rx_ant: Option<String>,
     pub tx_ant: Option<String>,
@@ -55,7 +55,7 @@ pub struct CfgUsrpB2xx {
 }
 
 /// Configuration for LimeSDR
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct CfgLimeSdr {
     pub rx_ant: Option<String>,
     pub tx_ant: Option<String>,
@@ -67,7 +67,7 @@ pub struct CfgLimeSdr {
 }
 
 /// Configuration for SXceiver
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct CfgSxCeiver {
     pub rx_ant: Option<String>,
     pub tx_ant: Option<String>,
@@ -78,7 +78,7 @@ pub struct CfgSxCeiver {
 }
 
 /// Configuration for Pluto timestamp
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct CfgPluto {
     pub rx_ant: Option<String>,
     pub tx_ant: Option<String>,
