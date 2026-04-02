@@ -15,7 +15,7 @@ fn test_u_mm_status_energy_saving() {
     debug::setup_logging_verbose();
     let test_vec1 = "00110000010010";
     let dltime_vec1 = TdmaTime::default().add_timeslots(2); // Downlink time: 0/1/1/3
-    let ultime_vec1 = dltime_vec1.add_timeslots(-2); // Uplink time: 0/1/1/1
+    // let ultime_vec1 = dltime_vec1.add_timeslots(-2); // Uplink time: 0/1/1/1
     let test_prim1 = LmmMleUnitdataInd {
         sdu: BitBuffer::from_bitstr(test_vec1),
         handle: 0,
@@ -29,7 +29,6 @@ fn test_u_mm_status_energy_saving() {
         sap: Sap::LmmSap,
         src: TetraEntity::Mle,
         dest: TetraEntity::Mm,
-        dltime: ultime_vec1,
         msg: SapMsgInner::LmmMleUnitdataInd(test_prim1),
     };
 

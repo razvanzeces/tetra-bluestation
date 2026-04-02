@@ -1,6 +1,6 @@
 use tetra_config::bluestation::SharedConfig;
+use tetra_core::Layer2Service;
 use tetra_core::{BitBuffer, Sap, SsiType, TetraAddress, tetra_entities::TetraEntity, unimplemented_log};
-use tetra_core::{Layer2Service, TdmaTime};
 use tetra_pdus::cmce::enums::pre_coded_status::PreCodedStatus;
 use tetra_pdus::cmce::enums::short_report_type::ShortReportType;
 use tetra_saps::control::enums::sds_user_data::SdsUserData;
@@ -70,10 +70,10 @@ impl SdsBsSubentity {
 
         if is_local_issi {
             tracing::info!("SDS: local delivery: {} -> {}", source_ssi, dest_ssi);
-            self.send_d_sds_data(queue, message.dltime, source_ssi, dest_ssi, SsiType::Issi, pdu.user_defined_data);
+            self.send_d_sds_data(queue, source_ssi, dest_ssi, SsiType::Issi, pdu.user_defined_data);
         } else if is_local_group {
             tracing::info!("SDS: group delivery: {} -> GSSI {}", source_ssi, dest_ssi);
-            self.send_d_sds_data(queue, message.dltime, source_ssi, dest_ssi, SsiType::Gssi, pdu.user_defined_data);
+            self.send_d_sds_data(queue, source_ssi, dest_ssi, SsiType::Gssi, pdu.user_defined_data);
         } else if net_brew::feature_sds_enabled(&self.config)
             && (net_brew::is_brew_issi_routable(&self.config, dest_ssi) || net_brew::is_tetrapack_sds_service_issi(&self.config, dest_ssi))
         {
@@ -82,7 +82,6 @@ impl SdsBsSubentity {
                 sap: Sap::Control,
                 src: TetraEntity::Cmce,
                 dest: TetraEntity::Brew,
-                dltime: message.dltime,
                 msg: SapMsgInner::CmceSdsData(CmceSdsData {
                     source_issi: source_ssi,
                     dest_issi: dest_ssi,
@@ -114,14 +113,7 @@ impl SdsBsSubentity {
         }
 
         // Send D-SDS-DATA downlink to the local MS. Schedule on next ts1 to ensure it gets sent on the MCCH
-        self.send_d_sds_data(
-            queue,
-            message.dltime.forward_to_timeslot(1),
-            sds.source_issi,
-            sds.dest_issi,
-            SsiType::Issi,
-            sds.user_defined_data,
-        );
+        self.send_d_sds_data(queue, sds.source_issi, sds.dest_issi, SsiType::Issi, sds.user_defined_data);
     }
 
     /// Handle incoming SDS data from Control entity (network-originated SDS)
@@ -155,7 +147,6 @@ impl SdsBsSubentity {
         // Send D-SDS-DATA downlink to the local MS. Schedule on next ts1 to ensure it gets sent on the MCCH
         self.send_d_sds_data(
             queue,
-            TdmaTime::default().forward_to_timeslot(1),
             source_ssi,
             dest_ssi,
             if dest_is_group { SsiType::Gssi } else { SsiType::Issi },
@@ -205,7 +196,7 @@ impl SdsBsSubentity {
         // Route: local delivery, Brew forward, or drop
         if self.config.state_read().subscribers.is_registered(dest_ssi) {
             tracing::info!("SDS-STATUS: local delivery: {} -> {}", source_ssi, dest_ssi);
-            self.send_d_status(queue, message.dltime, source_ssi, dest_ssi, pdu.pre_coded_status);
+            self.send_d_status(queue, source_ssi, dest_ssi, pdu.pre_coded_status);
         } else if net_brew::is_active(&self.config)
             && (net_brew::is_brew_issi_routable(&self.config, dest_ssi) || net_brew::is_tetrapack_sds_service_issi(&self.config, dest_ssi))
         {
@@ -241,7 +232,6 @@ impl SdsBsSubentity {
                 sap: Sap::Control,
                 src: TetraEntity::Cmce,
                 dest: TetraEntity::Brew,
-                dltime: message.dltime,
                 msg: SapMsgInner::CmceSdsData(CmceSdsData {
                     source_issi: source_ssi,
                     dest_issi: dest_ssi,
@@ -257,14 +247,7 @@ impl SdsBsSubentity {
     }
 
     /// Build and send a D-STATUS PDU to a local MS
-    fn send_d_status(
-        &self,
-        queue: &mut MessageQueue,
-        dltime: tetra_core::TdmaTime,
-        source_issi: u32,
-        dest_issi: u32,
-        pre_coded_status: PreCodedStatus,
-    ) {
+    fn send_d_status(&self, queue: &mut MessageQueue, source_issi: u32, dest_issi: u32, pre_coded_status: PreCodedStatus) {
         let pdu = DStatus {
             calling_party_type_identifier: PartyTypeIdentifier::Ssi,
             calling_party_address_ssi: Some(source_issi as u64),
@@ -288,7 +271,6 @@ impl SdsBsSubentity {
             sap: Sap::LcmcSap,
             src: TetraEntity::Cmce,
             dest: TetraEntity::Mle,
-            dltime,
             msg: SapMsgInner::LcmcMleUnitdataReq(LcmcMleUnitdataReq {
                 sdu,
                 handle: 0,
@@ -311,7 +293,6 @@ impl SdsBsSubentity {
     fn send_d_sds_data(
         &self,
         queue: &mut MessageQueue,
-        dltime: tetra_core::TdmaTime,
         source_issi: u32,
         dest_ssi: u32,
         dest_ssi_type: SsiType,
@@ -345,7 +326,6 @@ impl SdsBsSubentity {
             sap: Sap::LcmcSap,
             src: TetraEntity::Cmce,
             dest: TetraEntity::Mle,
-            dltime,
             msg: SapMsgInner::LcmcMleUnitdataReq(LcmcMleUnitdataReq {
                 sdu,
                 handle: 0,
