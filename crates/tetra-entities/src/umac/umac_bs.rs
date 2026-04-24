@@ -1388,6 +1388,7 @@ impl UmacBs {
                 ts: circuit.ts,
                 usage: circuit.usage,
                 circuit_mode: circuit.circuit_mode,
+                simplex_duplex: circuit.simplex_duplex,
                 speech_service: circuit.speech_service,
                 etee_encrypted: circuit.etee_encrypted,
             };

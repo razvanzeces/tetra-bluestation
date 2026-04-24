@@ -18,7 +18,9 @@ pub struct Circuit {
 
     // pub comm_type: CommunicationType,
 
-    // pub simplex_duplex: bool,
+    /// True = full duplex (both parties can transmit simultaneously).
+    /// False = half duplex / simplex (PTT-style, floor control needed).
+    pub simplex_duplex: bool,
 
     // pub slots_per_frame: Option<u8>, // only relevant for circuit data
     /// 2 opt, 00 = TETRA encoded speech, 1|2 = reserved, 3 = proprietary
